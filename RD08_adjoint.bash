@@ -47,7 +47,7 @@ export STDOUT="stdout-adjoint.txt"
 
 # Mode
 MODE='-a'
-export GPU_INDEX=1
+export GPU_INDEX=0
 # Generate dimensions file
 Nx=80  dx=0.000053
 Ny=240 dy=0.000053
@@ -67,7 +67,7 @@ nRaysTheta=1024
 dt=1.6667e-8
 tMax=3.32e-6
 # Generate sensor file
-cat > $INPUT_FOLDER$SENSORS<<EOF
+cat > $INPUT_FOLDER$SENSORS <<EOF
 EOF
 # Step and tMax
 echo "$dt $tMax 0 0 0 0 0 0 0" >> $INPUT_FOLDER$SENSORS
