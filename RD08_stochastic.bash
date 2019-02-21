@@ -8,8 +8,8 @@
 #$ -l gpu=1
 #$ -l h_rt=20:00:00
 #$ -l tmem=3G
-#$ -N sgd06_tau2e18_lambda2e-3_batch8570
-#$ -wd /home/frullan/HighFreqCode/ExperimentalData/RD06_finger2/
+#$ -N sgd06_tau4e18_lambda5e-3_batch200
+#$ -wd /home/frullan/HighFreqCode/ExperimentalData/RD08_finger2_doubleRes/
 #$ -S /bin/bash
 
 # -o RTiter.txt
@@ -55,9 +55,9 @@ export MODE='-g'
 if [ "$MODE" = "-G" ]; then
     echo "=================== GRADIENT DESCENT ===================="
     # Regularization parameters
-    TAU=1e18
-    LAMBDA=2e-2
-    NITER=10
+    TAU=2e18
+    LAMBDA=1e-2
+    NITER=5
     # Output
     export STDOUT="stdout_GD_tau"$TAU"_lambda"$LAMBDA$"_iter"$NITER".txt"
     RTiterative_GPU $MODE $INPUT_FOLDER$DIMENSIONS $INPUT_FOLDER$SOUND_SPEED \
@@ -68,10 +68,10 @@ if [ "$MODE" = "-G" ]; then
 elif [ "$MODE" = "-g" ]; then
     echo "=================== STOCHASTIC GRADIENT DESCENT ===================="
     # Regularization parameters
-    TAU=2e18
-    LAMBDA=2e-3
-    BATCH_SIZE=8570
-    N_EPOCHS=10
+    TAU=4e18
+    LAMBDA=5e-3
+    BATCH_SIZE=200
+    N_EPOCHS=5
     # Output
     export STDOUT="stdout_S-GD_tau"$TAU"_lambda"$LAMBDA"_batch"$BATCH_SIZE"_epochs"$N_EPOCHS".txt"
     RTiterative_GPU $MODE $INPUT_FOLDER$DIMENSIONS $INPUT_FOLDER$SOUND_SPEED $INPUT_FOLDER$SENSORS \
