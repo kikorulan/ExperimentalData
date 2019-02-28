@@ -80,6 +80,52 @@ for j = 1:length(SGD.lambda)
     end
 end
 
+
+%========================================================================================================================
+% PIXEL PRESSURE
+%========================================================================================================================
+% Load Initial Pressure
+u0Matrix = importdata('./input_data/reconstruction_5iterations.dat', ' ', 0);
+u0 = matrix2cube(u0Matrix, Nz);
+h = plot_projection(u0, dx);
+a = axes;
+a.Visible = 'off'; 
+t = title('Recon lowest error');
+t.Visible = 'on'; 
+
+
+%==============================
+% Gradient Descent
+%==============================
+GD = [];
+GD.tau    = '1e18';
+GD.lambda = '1e-2';
+GD.iter = '1';
+pixelPressureMatrix = importdata(['./results/adjoint/FB/pixelPressure_GD_tau', GD.tau, '_lambda', GD.lambda, '_iter', GD.iter, '.dat'], ' ', 0);
+pixelPressure_GD = max(0, matrix2cube(pixelPressureMatrix, Nz));
+plot_projection(pixelPressure_GD, dx);
+a = axes;
+a.Visible = 'off'; 
+t = title(['GD - t = ', GD.tau, ', l = ', GD.lambda, ', iter = ', GD.iter, ' - homogeneous SS']);
+t.Visible = 'on'; 
+
+%==============================
+% Stochastic Gradient Descent
+%==============================
+SGD = [];
+SGD.epoch  = '1';
+SGD.batch  = '800';
+SGD.tau    = '4e18';
+SGD.lambda = '1e-2';
+pixelPressureMatrix = importdata(['./results/adjoint/S-FB/', SGD.batch, '/pixelPressure_S-GD_tau', SGD.tau, '_lambda', SGD.lambda, '_batch', SGD.batch, '_subepoch', SGD.epoch, '.dat'], ' ', 0);
+pixelPressure = max(0, matrix2cube(pixelPressureMatrix, Nz));
+plot_projection(pixelPressure, dx);
+a = axes;
+t = title(['S-GD - t = ', SGD.tau, ', l = ', SGD.lambda, ', batch = ', SGD.batch, ', epoch = ', SGD.epoch, ' - homogeneous SS']);
+a.Visible = 'off'; 
+t.Visible = 'on'; 
+%caxis([0, 0.75])
+
 %========================================================================================================================
 % ITERATIVE RECONSTRUCTION
 %========================================================================================================================
@@ -170,6 +216,9 @@ end
 %========================================================================================================================
 % DUAL DISTANCE
 %========================================================================================================================
+
+
+
 nIter = 5;
 %====================
 % Gradient descent - lambda variation
@@ -210,11 +259,13 @@ ax.GridAlpha = 0.2;
 % Stochastig Gradient descent
 %====================
 disp('S-GD');
-SGD.batch = '3200';
+SGD.batch = '90';
 SGD.tau    =  {'2e18'};
-SGD.lambda = {'1e-2', '2e-2', '5e-2'};
-%SGD.lambda = {'1e-3', '2e-3', '5e-3'};
-%SGD.lambda = {'2e-4', '5e-4', '1e-3', '2e-3', '5e-3'};
+%SGD.lambda = {'1e-3', '2e-3'};
+%SGD.lambda = {'1e-2', '2e-2', '5e-2'};
+%SGD.lambda = {'1e-3', '2e-3', '5e-3', '1e-2'};
+%SGD.lambda = {'5e-3', '1e-2'};
+SGD.lambda = {'1e-4', '2e-4', '5e-4', '1e-3', '2e-3', '5e-3'};
 %SGD.lambda = {'2e-4', '5e-4', '1e-3', '2e-3', '5e-3', '1e-2', '2e-2', '5e-2'};
 %SGD.lambda = {'1e-2'};
 nIter = 5;
@@ -223,7 +274,7 @@ for ii = 1:length(SGD.lambda)
     disp(ii)
     SGD_error_dd{ii} = norm_distance(y0, 0*y0);
     for iter = 1:nIter
-        tSignal = importdata(['./results/forward/S-FB/', SGD.batch, '/forwardSignal_S-GD_tau', SGD.tau{1}, '_lambda', SGD.lambda{ii}, '_batch', SGD.batch, '_subepoch', int2str(iter), '.dat'], ' ', 0);
+        tSignal = importdata(['./results/forward/S-FB/', SGD.batch, '/forwardSignal_S-GD_tau', SGD.tau{1}, '_lambda', SGD.lambda{ii}, '_batch', SGD.batch, '_epoch', int2str(iter), '.dat'], ' ', 0);
         yi = tSignal(2:end, 1:size(y0, 2));
         SGD_error_dd{ii} = [SGD_error_dd{ii} norm_distance(y0, yi)];
         SGD_error_dd{ii}
@@ -241,9 +292,9 @@ for ii = 1:length(SGD.lambda)
 end
 axis([0 5 3e-17 4.5e-17])
 set(gca, 'ytick', 1e-18*(30:0.5:45));
-legend('GD', 'S-GD 1e-2', 'S-GD 2e-2', 'S-GD 5e-2');
-%legend('GD', 'S-GD 1e-3', 'S-GD 2e-3', 'S-GD 5e-3');
-%legend('GD', 'S-GD 2e-4', 'S-GD 5e-4', 'S-GD 1e-3', 'S-GD 2e-3', 'S-GD 5e-3');
+%legend('GD', 'S-GD 1e-2', 'S-GD 2e-2', 'S-GD 5e-2');
+%legend('GD', 'S-GD 1e-3', 'S-GD 2e-3', 'S-GD 5e-3', 'S-GD 1e-2');
+legend('GD', 'S-GD 1e-4', 'S-GD 2e-4', 'S-GD 5e-4', 'S-GD 1e-3', 'S-GD 2e-3', 'S-GD 5e-3');
 %legend('GD', 'S-GD 2e-4', 'S-GD 5e-4', 'S-GD 1e-3', 'S-GD 2e-3', 'S-GD 5e-3', 'S-GD 1e-2', 'S-GD 2e-2', 'S-GD 5e-2');
 title(['Dual Distance Error tau = ', SGD.tau, ', batch = ', SGD.batch]);
 grid on;
@@ -302,11 +353,13 @@ ax.GridAlpha = 0.2;
 %====================
 % Stochastic Gradient descent - lambda variation
 %====================
+nIter = 5
 disp('S-GD');
-SGD.batch = '3200';
-SGD.tau    =  {'1e18'};
+SGD.batch = '800';
+SGD.tau    =  {'4e18'};
 %SGD.lambda = {'2e-3', '5e-3', '1e-2'};
-SGD.lambda = {'1e-4', '2e-4', '5e-4'};
+%SGD.lambda = {'1e-4', '2e-4', '5e-4'};
+SGD.lambda = {'1e-3', '2e-3', '5e-3', '1e-2'};
 clear SGD_error_pd;
 for ii = 1:length(SGD.lambda)
     disp(ii)
