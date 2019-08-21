@@ -1,5 +1,6 @@
 % Heterogeneous Propagation Medium Example
-cd /cs/research/medim/projects2/projects/frullan/Documents/HighFreqCode/ExperimentalData/RD09_finger2_doubleRes_subsampled;
+%cd /cs/research/medim/projects2/projects/frullan/Documents/HighFreqCode/ExperimentalData/RD09_finger2_doubleRes_subsampled;
+cd /scratch0/NOT_BACKED_UP/frullan/ExperimentalData/RD10_finger2_doubleRes_subsampled;
 
 clear all;
 close all;
@@ -43,7 +44,7 @@ y_max = 130;
 z_min = 3;
 z_max = 122;
 % Subsample data
-subsample_factor = 1;
+subsample_factor = 2;
 sensor_data = sensor_data(y_min:subsample_factor:y_max, z_min:subsample_factor:z_max, :);
 % Reshape sensor data
 sensor_data = reshape(sensor_data, [Ny*Nz/(2*subsample_factor)/(2*subsample_factor), Nt]);
@@ -53,8 +54,8 @@ dlmwrite('./input_data/pixelPressure_0.dat', pixelPressure, 'delimiter', ' ');
 sound_speed = c0*ones(Nx*Nz, Ny);
 dlmwrite('input_data/sound_speed.dat', sound_speed, 'delimiter', ' ');
 forward_signal = [kgrid.t_array; sensor_data];
-%dlmwrite('input_data/forwardSignal_reference_3600sensors.dat', forward_signal, 'delimiter', ' ');
-dlmwrite('input_data/forwardSignal_reference_14400sensors.dat', forward_signal, 'delimiter', ' ');
+dlmwrite('input_data/forwardSignal_reference_3600sensors.dat', forward_signal, 'delimiter', ' ');
+%dlmwrite('input_data/forwardSignal_reference_14400sensors.dat', forward_signal, 'delimiter', ' ');
 
 %=========================================================================
 % SIMULATION
@@ -78,14 +79,14 @@ source_adj.p_mode = 'additive';
 sensor_adj.mask = ones(Nx, Ny, Nz);
 sensor_adj.record = {'p_final'};
 % Save and run
-kspaceFirstOrder3D(kgrid, medium, source_adj, sensor_adj, input_args{:}, 'SaveToDisk', 'input_data/RD09_adjoint_input_3600sensors.h5');
-system('../kspaceFirstOrder3D-CUDA -i input_data/RD09_adjoint_input_3600sensors.h5 -o output_data/RD09_adjoint_output_3600sensors.h5 --p_final');
+kspaceFirstOrder3D(kgrid, medium, source_adj, sensor_adj, input_args{:}, 'SaveToDisk', 'input_data/RD10_adjoint_input_3600sensors.h5');
+system('../kspaceFirstOrder3D-OMP -i input_data/RD10_adjoint_input_3600sensors.h5 -o output_data/RD10_adjoint_output_3600sensors.h5 --p_final');
 
 %==============================
 % FORWARD
 %==============================
 PML_size = 10;
-p0_adj_PML = h5read('./output_data/RD09_adjoint_output_3600sensors.h5', '/p_final');
+p0_adj_PML = h5read('./output_data/RD10_adjoint_output_3600sensors.h5', '/p_final');
 p0_adj = p0_adj_PML(1+PML_size:end-PML_size, 1+PML_size:end-PML_size, 1+PML_size:end-PML_size);
 
 % Source
@@ -97,10 +98,10 @@ sensor.mask = zeros(Nx, Ny, Nz);
 sensor.mask(1, 1:2*subsample_factor:end, 1:2*subsample_factor:end) = 1;
 % Number of sensors
 numberSensors = sum(sensor.mask(:))
-filename = './input_data/RD09_forward_input_3600sensors.h5';
+filename = './input_data/RD10_forward_input_3600sensors.h5';
 kspaceFirstOrder3D(kgrid, medium, source, sensor, input_args{:}, 'SaveToDisk', filename);
 % Run forward
-system('../kspaceFirstOrder3D-CUDA -i input_data/RD09_forward_input_3600sensors.h5 -o output_data/RD09_forward_output_3600sensors.h5');
+system('../kspaceFirstOrder3D-OMP -i input_data/RD10_forward_input_3600sensors.h5 -o output_data/RD10_forward_output_3600sensors.h5');
 
 %%%%%%%%%%%
 % SAVE
@@ -110,14 +111,14 @@ save input_data/kgrid_data_3600sensors.mat kgrid medium source sensor source_adj
 %=========================================================================
 % SENSOR DATA
 %=========================================================================
-sensor_data_forward_3600 = h5read('./output_data/RD09_forward_output_3600sensors.h5', '/p');
+sensor_data_forward_3600 = h5read('./output_data/RD10_forward_output_3600sensors.h5', '/p');
 
 %=========================================================================
 % PLOT
 %=========================================================================
 % ADJOINT - GENERATED PARAMETERS
 PML_size = 10;
-p0_adj_PML = h5read('./output_data/RD09_adjoint_output_3600sensors.h5', '/p_final');
+p0_adj_PML = h5read('./output_data/RD10_adjoint_output_3600sensors.h5', '/p_final');
 p0_adj = p0_adj_PML(1+PML_size:end-PML_size, 1+PML_size:end-PML_size, 1+PML_size:end-PML_size);
 p0_recon_adj = max(0, p0_adj);
 plot_projection(p0_recon_adj, dx);

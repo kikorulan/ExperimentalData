@@ -1,5 +1,6 @@
 % Read data from files
-cd /cs/research/medim/projects2/projects/frullan/Documents/HighFreqCode/ExperimentalData/RD08_finger2_doubleRes;
+%cd /cs/research/medim/projects2/projects/frullan/Documents/HighFreqCode/ExperimentalData/RD08_finger2_doubleRes;
+cd /scratch0/NOT_BACKED_UP/frullan/ExperimentalData/RD08_finger2_doubleRes;
 
 clear all;
 close all;
@@ -115,8 +116,8 @@ t.Visible = 'on';
 SGD = [];
 SGD.epoch  = '1';
 SGD.batch  = '800';
-SGD.tau    = '4e18';
-SGD.lambda = '1e-2';
+SGD.tau    = '2e18';
+SGD.lambda = '1e-3';
 pixelPressureMatrix = importdata(['./results/adjoint/S-FB/', SGD.batch, '/pixelPressure_S-GD_tau', SGD.tau, '_lambda', SGD.lambda, '_batch', SGD.batch, '_subepoch', SGD.epoch, '.dat'], ' ', 0);
 pixelPressure = max(0, matrix2cube(pixelPressureMatrix, Nz));
 plot_projection(pixelPressure, dx);
@@ -356,7 +357,7 @@ ax.GridAlpha = 0.2;
 nIter = 5
 disp('S-GD');
 SGD.batch = '800';
-SGD.tau    =  {'4e18'};
+SGD.tau    =  {'2e18'};
 %SGD.lambda = {'2e-3', '5e-3', '1e-2'};
 %SGD.lambda = {'1e-4', '2e-4', '5e-4'};
 SGD.lambda = {'1e-3', '2e-3', '5e-3', '1e-2'};

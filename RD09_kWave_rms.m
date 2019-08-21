@@ -11,8 +11,8 @@ load ./settings/Full_scan1_temp@850nm_t0[0]_dx[106µm]_dy[106µm]_dt[17ns]_34s19
 %=========================================================================
 % create the computational grid
 Nx = 80;           % number of grid points in the x (row) direction
-Ny = 240;           % number of grid points in the y (column) direction
-Nz = 240;           % number of grid points in the y (column) direction
+Ny = 288;           % number of grid points in the y (column) direction
+Nz = 266;           % number of grid points in the y (column) direction
 dx = 5.3e-5;        % grid point spacing in the x direction [m]
 dy = 5.3e-5;        % grid point spacing in the y direction [m]
 dz = 5.3e-5;        % grid point spacing in the y direction [m]
@@ -42,19 +42,13 @@ y_min = 11;
 y_max = 130;
 z_min = 3;
 z_max = 122;
-% Subsample data
-subsample_factor = 1;
-sensor_data = sensor_data(y_min:subsample_factor:y_max, z_min:subsample_factor:z_max, :);
 % Reshape sensor data
-sensor_data = reshape(sensor_data, [Ny*Nz/(2*subsample_factor)/(2*subsample_factor), Nt]);
-save input_data/sensor_data_3600.mat sensor_data;
-pixelPressure = zeros(Nx*Nz, Ny);
-dlmwrite('./input_data/pixelPressure_0.dat', pixelPressure, 'delimiter', ' ');
-sound_speed = c0*ones(Nx*Nz, Ny);
-dlmwrite('input_data/sound_speed.dat', sound_speed, 'delimiter', ' ');
+load input_data/rms_coeff_50;
+sensor_data = sensor_data./repmat(sqrt(rms_coeff_50), [1, 1, Nt]);
+% Reshape sensor data
+sensor_data = reshape(sensor_data, [Ny*Nz/2/2, Nt]);
 forward_signal = [kgrid.t_array; sensor_data];
-%dlmwrite('input_data/forwardSignal_reference_3600sensors.dat', forward_signal, 'delimiter', ' ');
-dlmwrite('input_data/forwardSignal_reference_14400sensors.dat', forward_signal, 'delimiter', ' ');
+dlmwrite('input_data/forwardSignal_reference_14400sensors_rmsCorrection.dat', forward_signal, 'delimiter', ' ');
 
 %=========================================================================
 % SIMULATION
@@ -70,22 +64,22 @@ input_args = {'PMLInside', false, 'PlotPML', false, 'Smooth', false};
 
 % Consider all sensors
 source_adj.p_mask = zeros(Nx, Ny, Nz);
-source_adj.p_mask(1, 1:2*subsample_factor:end, 1:2*subsample_factor:end) = 1;
+source_adj.p_mask(1, 1:2:end, 1:2:end) = 1;
 source_adj.p = fliplr(sensor_data);
-source_adj.p_mode = 'additive';
-%source_adj.p_mode = 'dirichlet';
+%source_adj.p_mode = 'additive';
+source_adj.p_mode = 'dirichlet';
 % Sensor
 sensor_adj.mask = ones(Nx, Ny, Nz);
 sensor_adj.record = {'p_final'};
 % Save and run
-kspaceFirstOrder3D(kgrid, medium, source_adj, sensor_adj, input_args{:}, 'SaveToDisk', 'input_data/RD09_adjoint_input_3600sensors.h5');
-system('../kspaceFirstOrder3D-CUDA -i input_data/RD09_adjoint_input_3600sensors.h5 -o output_data/RD09_adjoint_output_3600sensors.h5 --p_final');
+kspaceFirstOrder3D(kgrid, medium, source_adj, sensor_adj, input_args{:}, 'SaveToDisk', 'input_data/RD09_adjoint_input_14400sensors_rmsCorrection.h5');
+system('../kspaceFirstOrder3D-CUDA -i input_data/RD09_adjoint_input_14400sensors_rmsCorrection.h5 -o output_data/RD09_adjoint_output_14400sensors_rmsCorrection.h5 --p_final');
 
 %==============================
 % FORWARD
 %==============================
 PML_size = 10;
-p0_adj_PML = h5read('./output_data/RD09_adjoint_output_3600sensors.h5', '/p_final');
+p0_adj_PML = h5read('./output_data/RD09_adjoint_output_14400sensors_rmsCorrection.h5', '/p_final');
 p0_adj = p0_adj_PML(1+PML_size:end-PML_size, 1+PML_size:end-PML_size, 1+PML_size:end-PML_size);
 
 % Source
@@ -94,30 +88,28 @@ source.p0 = max(0, source.p0);
 
 % Define the sensors
 sensor.mask = zeros(Nx, Ny, Nz);
-sensor.mask(1, 1:2*subsample_factor:end, 1:2*subsample_factor:end) = 1;
+sensor.mask(1, 1:2:end, 1:2:end) = 1;
 % Number of sensors
 numberSensors = sum(sensor.mask(:))
-filename = './input_data/RD09_forward_input_3600sensors.h5';
+save input_data/kgrid_data_3600sensors.mat kgrid medium source sensor input_args;
+filename = './input_data/RD09_forward_input_14400sensors_rmsCorrection.h5';
 kspaceFirstOrder3D(kgrid, medium, source, sensor, input_args{:}, 'SaveToDisk', filename);
 % Run forward
-system('../kspaceFirstOrder3D-CUDA -i input_data/RD09_forward_input_3600sensors.h5 -o output_data/RD09_forward_output_3600sensors.h5');
-
-%%%%%%%%%%%
-% SAVE
-%%%%%%%%%%%
-save input_data/kgrid_data_3600sensors.mat kgrid medium source sensor source_adj sensor_adj input_args;
-
-%=========================================================================
-% SENSOR DATA
-%=========================================================================
-sensor_data_forward_3600 = h5read('./output_data/RD09_forward_output_3600sensors.h5', '/p');
+system('../kspaceFirstOrder3D-CUDA -i input_data/RD09_forward_input_14400sensors_rmsCorrection.h5 -o output_data/RD09_forward_output_14400sensors_rmsCorrection.h5');
 
 %=========================================================================
 % PLOT
 %=========================================================================
-% ADJOINT - GENERATED PARAMETERS
+% ADJOINT
 PML_size = 10;
-p0_adj_PML = h5read('./output_data/RD09_adjoint_output_3600sensors.h5', '/p_final');
+p0_adj_PML = h5read('./output_data/RD09_adjoint_output_14400sensors_rmsCorrection.h5', '/p_final');
+p0_adj = p0_adj_PML(1+PML_size:end-PML_size, 1+PML_size:end-PML_size, 1+PML_size:end-PML_size);
+p0_recon_adj = max(0, p0_adj);
+plot_projection(p0_recon_adj, dx);
+
+% ADJOINT - RMS CORRECTION
+PML_size = 10;
+p0_adj_PML = h5read('./output_data/RD09_adjoint_output_14400sensors.h5', '/p_final');
 p0_adj = p0_adj_PML(1+PML_size:end-PML_size, 1+PML_size:end-PML_size, 1+PML_size:end-PML_size);
 p0_recon_adj = max(0, p0_adj);
 plot_projection(p0_recon_adj, dx);
