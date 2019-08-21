@@ -6,9 +6,9 @@
 
 #$ -P gpu
 #$ -l gpu=1
-#$ -l h_rt=20:00:00
+#$ -l h_rt=80:00:00
 #$ -l tmem=3G
-#$ -N sgd06_tau4e18_lambda5e-3_batch200
+#$ -N pdhg09_1.6e18
 #$ -wd /home/frullan/HighFreqCode/ExperimentalData/RD08_finger2_doubleRes/
 #$ -S /bin/bash
 
@@ -21,7 +21,7 @@
 # 3D domain. 
 # Compute the forward signal for sensors placed in the boundary of the cube
 #================================================================================
-
+export PATH="/home/frullan/HighFreqCode/HighFreq_3DRT/Build/bin:$PATH"
 export EXAMPLE="RD09_finger2_doubleRes_subsampled/"
 
 # Output folder
@@ -47,7 +47,7 @@ export PIXEL_PRESSURE="pixelPressure_0.dat"
 # Choose GPU
 export GPU_INDEX=0
 # Choose mode
-export MODE='-g'
+export MODE='-P'
 
 #================================================================================
 #=======   GRADIENT DESCENT
@@ -55,9 +55,9 @@ export MODE='-g'
 if [ "$MODE" = "-G" ]; then
     echo "=================== GRADIENT DESCENT ===================="
     # Regularization parameters
-    TAU=2e18
-    LAMBDA=1e-2
-    NITER=5
+    TAU=1.6e18
+    LAMBDA=1e-4
+    NITER=30
     # Output
     export STDOUT="stdout_GD_tau"$TAU"_lambda"$LAMBDA$"_iter"$NITER".txt"
     RTiterative_GPU $MODE $INPUT_FOLDER$DIMENSIONS $INPUT_FOLDER$SOUND_SPEED \
@@ -68,10 +68,10 @@ if [ "$MODE" = "-G" ]; then
 elif [ "$MODE" = "-g" ]; then
     echo "=================== STOCHASTIC GRADIENT DESCENT ===================="
     # Regularization parameters
-    TAU=4e18
-    LAMBDA=5e-3
-    BATCH_SIZE=200
-    N_EPOCHS=5
+    TAU=3.2e18
+    LAMBDA=1e-4
+    BATCH_SIZE=100
+    N_EPOCHS=30
     # Output
     export STDOUT="stdout_S-GD_tau"$TAU"_lambda"$LAMBDA"_batch"$BATCH_SIZE"_epochs"$N_EPOCHS".txt"
     RTiterative_GPU $MODE $INPUT_FOLDER$DIMENSIONS $INPUT_FOLDER$SOUND_SPEED $INPUT_FOLDER$SENSORS \
@@ -82,9 +82,9 @@ elif [ "$MODE" = "-g" ]; then
 elif [ "$MODE" = "-F" ]; then
     echo "=================== FISTA ===================="
     # Regularization parameters
-    TAU=3e17
-    LAMBDA=1e-2
-    NITER=10
+    TAU=8e17
+    LAMBDA=1e-4
+    NITER=30
     # Output
     export STDOUT="stdout_FISTA_tau"$TAU"_lambda"$LAMBDA"_iter"$NITER".txt"
     RTiterative_GPU $MODE $INPUT_FOLDER$DIMENSIONS $INPUT_FOLDER$SOUND_SPEED \
@@ -110,10 +110,10 @@ elif [ "$MODE" = "-P" ]; then
     echo "=================== PDHG ===================="
     # Regularization parameters
     SIGMA=1
-    TAU=5e17
+    TAU=1.6e18
     THETA=1      
-    LAMBDA=2e-3  
-    NITER=10
+    LAMBDA=1e-4
+    NITER=30
     # Output
     export STDOUT="stdout_PDHG_sigma"$SIGMA"_tau"$TAU"_theta"$THETA"_lambda"$LAMBDA"_iter"$NITER".txt"
     RTiterative_GPU $MODE $INPUT_FOLDER$DIMENSIONS $INPUT_FOLDER$SOUND_SPEED \
@@ -125,11 +125,11 @@ elif [ "$MODE" = "-p" ]; then
     echo "=================== S-PDHG ===================="
     # Regularization parameters
     SIGMA=1
-    TAU=2e18
+    TAU=1e17
     THETA=1    
-    LAMBDA=2e-3
-    BATCH_SIZE=2100
-    N_EPOCHS=10
+    LAMBDA=1e-4
+    BATCH_SIZE=100
+    N_EPOCHS=30
     # Output
     export STDOUT="stdout_S-PDHG_sigma"$SIGMA"_tau"$TAU"_theta"$THETA"_lambda"$LAMBDA"_batch"$BATCH_SIZE"_epochs"$N_EPOCHS".txt"
     RTiterative_GPU $MODE $INPUT_FOLDER$DIMENSIONS $INPUT_FOLDER$SOUND_SPEED \

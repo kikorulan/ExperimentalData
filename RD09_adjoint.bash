@@ -47,7 +47,7 @@ export STDOUT="stdout-adjoint.txt"
 
 # Mode
 MODE='-a'
-export GPU_INDEX=0
+export GPU_INDEX=1
 # Generate dimensions file
 Nx=80  dx=0.000053
 Ny=240 dy=0.000053

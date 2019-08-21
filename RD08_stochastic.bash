@@ -6,7 +6,7 @@
 
 #$ -P gpu
 #$ -l gpu=1
-#$ -l h_rt=20:00:00
+#$ -l h_rt=10:00:00
 #$ -l tmem=3G
 #$ -N sgd06_tau4e18_lambda5e-3_batch200
 #$ -wd /home/frullan/HighFreqCode/ExperimentalData/RD08_finger2_doubleRes/
